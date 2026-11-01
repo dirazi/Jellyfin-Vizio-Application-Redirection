@@ -1,0 +1,18 @@
+# Local credentials, host configuration and runtime state are never release inputs.
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*
+*secrets*
+auth.json
+config.local.*
+*.log
+*.zip
+node_modules/
+work/
+backups/
+security-audit/
+.DS_Store
