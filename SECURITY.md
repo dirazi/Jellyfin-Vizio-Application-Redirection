@@ -27,6 +27,16 @@ The release changes received an additional static review. Runtime verification o
 
 Upstream Jellyfin authentication and authorization, third-party Conjure behavior, TV firmware/browser security, filesystem ACLs, server headers, TLS and network exposure are outside this repository's source review. HTTP on a LAN is not encrypted; use a trusted network and an HTTPS configuration the TV can validate where available. Do not bypass certificate warnings or disable authentication to use this proof of concept.
 
+## Small follow-up review: app shortcut redirect
+
+On 2026-11-01, a focused static review revisited all twelve existing repository files and the new configurable redirect monitor, sample config, service and documentation. It looked for embedded credentials/private deployment data, network exfiltration, dynamic code execution, credential reads, privileged file writes, and interference with preserved app paths. No malicious behavior, embedded password/API key/private key, or direct network-exfiltration path was identified in the reviewed release. This is a bounded source observation, not a guarantee of safety or a full penetration test.
+
+The new monitor intentionally holds a TV control bearer token locally. It keeps that file outside the checkout/webroot, root-owned and private, writes replacement tokens atomically, checks token file type/ownership/link count/permissions, and never logs the token. It creates no inbound HTTP service, downloads no packages, invokes no shell, and disables environment proxies and TV API redirects. Its certificate exception is confined to the local SmartCast client, but it does not protect against an active network attacker impersonating the TV. The configured TV, hosted app and administrator-owned configuration remain trusted inputs.
+
+Redirecting uses exact APP_ID/NAME_SPACE/MESSAGE transitions, a startup/recovery baseline, cooldown, launch-rate limit and process lock. It cannot identify a physical button when multiple entry paths share an app state. Preserved WatchFree+ paths must be tested on the owner's TV before enabling a redirect. Generalized source changes were reviewed but not freshly run on a TV or tested as a Linux service in the publication environment. The owner confirmed the earlier deployment-specific redirect worked; that does not validate every generalized configuration or the complete browser-adapter release.
+
+The release contains placeholder hosts only. Capture mode intentionally prints local app metadata and may reveal private URLs from other apps; redact it before sharing. Ignore rules reduce accidental inclusion but do not sanitize Git history or replace review. Existing Git commit attribution is public GitHub metadata; this update does not rewrite historical author records.
+
 ## Reporting an issue
 
 Do not include tokens, passwords, Quick Connect codes, TV pairing values, unredacted logs, private server URLs or account data in public reports. For an ordinary navigation bug, describe the page, key press, expected action, Jellyfin version and TV model. For a potential security issue, avoid posting an exploit or secret publicly; use a private reporting channel offered by the repository owner if available.

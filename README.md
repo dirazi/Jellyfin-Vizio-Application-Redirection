@@ -2,6 +2,8 @@
 
 A proof of concept that makes a Jellyfin-hosted webpage usable with a VIZIO TV remote when launched through Conjure.
 
+It also includes an optional **app shortcut redirect monitor**: pressing a chosen remote shortcut can launch your own hosted webfront through Conjure. See [APP-REDIRECT.md](APP-REDIRECT.md) for the confirmed Crackle deployment, preserving ordinary WatchFree+, selecting another source app, choosing any compatible hosted webpage, pairing, dry runs, systemd setup and repair. The generic monitor is independent of the Jellyfin-specific browser adapters.
+
 **Only tested TV model: VIZIO V4K65X-0810.** The project was developed against a Jellyfin installation reporting **12.1.0**, using the Debian native-package webroot `/usr/share/jellyfin/web`. Other TV models, firmware versions, Jellyfin versions and deployment layouts are untested.
 
 The TV successfully loaded Jellyfin Web and completed Quick Connect during development. Arrow keys, Enter/OK and Backspace/Back were observed. Remote navigation has been iterated using owner feedback. This publication includes security precautions added after that testing; the complete published revision still needs a fresh TV regression pass. It is experimental, and some playback, focus, movie activation or season-selection behavior may need further work.
@@ -28,7 +30,7 @@ Use the [VIZIO SmartCast Conjure launcher](https://vizio-pm.s3-us-west-1.amazona
 4. In Conjure's webpage-launch flow, supply your complete Jellyfin Vizio entry URL shown above. The exact controls after pairing depend on the launcher/TV; this repository does not modify that launcher.
 5. On the TV, select Jellyfin's **Use Quick Connect** option. Approve the TV's code from an already signed-in Jellyfin client using Jellyfin's [Quick Connect flow](https://jellyfin.org/docs/general/server/quick-connect/). This avoids typing a password with the remote. Quick Connect must be enabled on your server.
 
-The launcher is an external service. This repository neither supplies nor stores TV pairing tokens, Jellyfin credentials or the contents of your Jellyfin session. Do not paste them into issues or commit them.
+The launcher is an external service. The browser adapters do not store TV pairing tokens or handle Jellyfin credentials. The optional local redirect monitor stores its own TV bearer token in a root-only state file outside the checkout; its configuration and token must remain private. No credentials or session contents are included in this repository. Do not paste them into issues or commit them.
 
 ## Intended controls
 

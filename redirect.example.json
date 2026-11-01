@@ -1,0 +1,14 @@
+{
+  "tv_host": "TV_IP_ADDRESS",
+  "tv_port": 7345,
+  "trigger": {
+    "APP_ID": "145",
+    "NAME_SPACE": 4,
+    "MESSAGE": "https://ui.sctv.prod.smartcasttv.com/watchfreeplus/avod/entry/entrypoint.html"
+  },
+  "launch": {
+    "APP_ID": "17",
+    "NAME_SPACE": 4,
+    "MESSAGE": "http://WEBFRONT_HOST:8096/web/vizio.html?vizioNav=1"
+  }
+}

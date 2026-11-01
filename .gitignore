@@ -16,3 +16,12 @@ work/
 backups/
 security-audit/
 .DS_Store
+
+# Redirect monitor: examples are public; actual configuration/state are private.
+vizio-app-redirect.json
+redirect.local.json
+auth-token
+.token-*
+process.lock
+__pycache__/
+*.pyc

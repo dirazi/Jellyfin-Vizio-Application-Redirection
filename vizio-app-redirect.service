@@ -1,0 +1,19 @@
+[Unit]
+Description=Vizio app shortcut to hosted webfront
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/libexec/vizio-app-redirect.py run
+User=root
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/vizio-app-redirect
+Restart=no
+
+[Install]
+WantedBy=multi-user.target
