@@ -56,7 +56,7 @@ Open the app/shortcut you want to redirect, then capture its current state:
 python3 /usr/local/libexec/vizio-app-redirect.py capture
 ```
 
-Copy that local result's three values into `trigger` in `/etc/vizio-app-redirect.json`. Preserve types: APP_ID is a string, NAME_SPACE an integer, MESSAGE an exact string. JSON descriptor messages must be escaped as JSON strings. Do not broaden the match to an app name, a URL substring, or only an app ID. The included trigger is merely the measured Crackle deployment example.
+Copy that local result's three values into `trigger` in `/etc/vizio-app-redirect.json`. Preserve types: APP_ID is a string, NAME_SPACE an integer, MESSAGE an exact string or `null` as captured. JSON descriptor messages must be escaped as JSON strings. The destination MESSAGE must always be a webpage URL string. Do not broaden the match to an app name, a URL substring, or only an app ID. The included trigger is merely the measured Crackle deployment example.
 
 Repeat captures for normal paths you want to preserve. If they return the same triple, this software cannot distinguish them. If the remote button does nothing, there is no state change for this monitor to detect. Choose a different shortcut or investigate separate hardware IR detection.
 

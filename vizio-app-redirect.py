@@ -22,13 +22,13 @@ TOKEN = STATE / 'auth-token'
 KEYS = ('APP_ID', 'NAME_SPACE', 'MESSAGE')
 
 
-def app(value):
+def app(value, webfront=False):
     if not isinstance(value, dict) or set(value) != set(KEYS):
         raise ValueError('App config must contain exactly APP_ID, NAME_SPACE, MESSAGE')
     if not isinstance(value['APP_ID'], str) or type(value['NAME_SPACE']) is not int:
         raise ValueError('APP_ID must be a string; NAME_SPACE must be an integer')
-    if not isinstance(value['MESSAGE'], str):
-        raise ValueError('MESSAGE must be a string')
+    if not isinstance(value['MESSAGE'], str) and not (value['MESSAGE'] is None and not webfront):
+        raise ValueError('Source MESSAGE must be a string or null; destination must be a string')
     return value
 
 
@@ -169,7 +169,7 @@ def main():
         os.umask(0o077)
         config = json.loads(Path(args.config).read_text())
         app(config['trigger'])
-        app(config['launch'])
+        app(config['launch'], webfront=True)
         if config['trigger'] == config['launch']:
             raise ValueError('Trigger and destination must differ')
         url = urlsplit(config['launch']['MESSAGE'])
