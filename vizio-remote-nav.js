@@ -1,4 +1,4 @@
-/* Jellyfin Web 12.1 Vizio/Conjure remote navigation trial.
+/* Jellyfin Web 12.1 Vizio/Conjure remote navigation, revision 10.
  * Opt in by opening /web/vizio.html?vizioNav=1 on the TV.
  * Other URLs leave Jellyfin's key handling untouched.
  */
@@ -11,49 +11,79 @@
     window.__vizioRemoteNavInstalled = true;
 
     var keys = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1 };
-    var selector = 'a[href],button,input,select,textarea,[role="button"],[tabindex="0"]';
+    var selector = 'a[href],button,input,select,textarea,[role="button"],[role="menuitem"],[role="option"],[role="combobox"],[tabindex="0"]';
     var style = document.createElement('style');
     style.textContent = 'html.vizio-remote-nav .vizio-remote-focused{outline:4px solid #ffd54f!important;outline-offset:3px!important;box-shadow:0 0 0 5px rgba(0,0,0,.8)!important}';
     document.documentElement.appendChild(style);
     document.documentElement.classList.add('vizio-remote-nav');
+
+    function visual(el) {
+        return el && el.tagName === 'INPUT' && el.type === 'checkbox' ? el.closest('label') || el : el;
+    }
 
     function visible(el) {
         if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return false;
         if (el.closest('[hidden],[aria-hidden="true"],.hide')) return false;
         var cs = window.getComputedStyle(el);
         if (cs.display === 'none' || cs.visibility === 'hidden') return false;
-        var r = el.getBoundingClientRect();
+        var r = visual(el).getBoundingClientRect();
         return r.width > 1 && r.height > 1;
     }
 
     function scope() {
-        var dialogs = Array.prototype.slice.call(document.querySelectorAll('dialog[open],[role="dialog"],[aria-modal="true"]')).filter(visible);
+        var dialogs = Array.prototype.slice.call(document.querySelectorAll('dialog[open],[role="dialog"],[aria-modal="true"],[role="menu"],[role="listbox"]')).filter(visible);
         return dialogs.length ? dialogs[dialogs.length - 1] : document;
     }
 
     function choices() {
         var root = scope();
         return Array.prototype.slice.call(root.querySelectorAll(selector)).filter(function (el) {
-            return visible(el) && el.tabIndex >= 0 && !el.matches('.card .cardText a.textActionButton,.card .cardOverlayButton,.card .btnCardOptions,.card .cardOverlayButton-br button') && !el.closest('.itemDetailsGroup,.detailsGroupItem,.itemTags,.itemExternalLinks');
+            return visible(el) && (el.tabIndex >= 0 || ['menuitem', 'option'].indexOf(el.getAttribute('role')) >= 0) && !el.matches('.card .cardText a.textActionButton,.card .cardOverlayButton,.card .btnCardOptions,.card .cardOverlayButton-br button') && !el.closest('.itemDetailsGroup,.detailsGroupItem,.itemTags,.itemExternalLinks');
         });
+    }
+
+    var topBarSelector = '.MuiToolbar-root,.headerTop,.skinHeader,.MuiAppBar-root,[role="tablist"],.emby-tabs,header,[role="banner"]';
+
+    function reveal(el) {
+        var node = visual(el), safeTop = 16;
+        Array.prototype.forEach.call(document.querySelectorAll('.skinHeader,.MuiAppBar-root,header,[role="banner"]'), function (bar) {
+            if (!visible(bar) || bar.contains(el)) return;
+            var cs = window.getComputedStyle(bar), r = bar.getBoundingClientRect();
+            if ((cs.position === 'fixed' || cs.position === 'sticky') &&
+                r.top <= 16 && r.bottom > 0 && r.bottom < window.innerHeight / 2) {
+                safeTop = Math.max(safeTop, r.bottom + 16);
+            }
+        });
+        node.style.scrollMarginTop = safeTop + 'px';
+        node.style.scrollMarginBottom = '16px';
+        try { node.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' }); }
+        catch (_) { node.scrollIntoView(false); }
     }
 
     function mark(el) {
         var old = document.querySelector('.vizio-remote-focused');
         if (old && old !== el) old.classList.remove('vizio-remote-focused');
         if (!el) return;
-        el.classList.add('vizio-remote-focused');
+        visual(el).classList.add('vizio-remote-focused');
         try { el.focus({ preventScroll: true }); } catch (_) { el.focus(); }
-        try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); }
-        catch (_) { el.scrollIntoView(false); }
+        reveal(el);
     }
 
     function center(el) {
-        var r = el.getBoundingClientRect();
+        var r = visual(el).getBoundingClientRect();
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
     function next(current, list, key) {
+        var bar = current.closest(topBarSelector);
+        if (bar && (key === 'ArrowLeft' || key === 'ArrowRight')) {
+            var row = visual(current).getBoundingClientRect();
+            list = list.filter(function (el) {
+                var r = visual(el).getBoundingClientRect();
+                var overlap = Math.min(row.bottom, r.bottom) - Math.max(row.top, r.top);
+                return bar.contains(el) && overlap >= Math.min(row.height, r.height) / 2;
+            });
+        }
         var a = center(current), best = null, bestScore = Infinity;
         list.forEach(function (el) {
             if (el === current) return;
@@ -77,7 +107,7 @@
         if (event.target && event.target.matches && event.target.matches(selector)) {
             var old = document.querySelector('.vizio-remote-focused');
             if (old && old !== event.target) old.classList.remove('vizio-remote-focused');
-            event.target.classList.add('vizio-remote-focused');
+            visual(event.target).classList.add('vizio-remote-focused');
         }
     });
 
@@ -94,6 +124,10 @@
             event.stopImmediatePropagation();
             if (!target) return;
             mark(target);
+        } else if (event.key === 'Enter' && active && ['menuitem', 'option'].indexOf(active.getAttribute('role')) >= 0) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            if (!event.repeat) active.click();
         } else if (event.key === 'Enter' && active && active.getAttribute('role') === 'button' && !/^(A|BUTTON|INPUT|SELECT|TEXTAREA)$/.test(active.tagName)) {
             event.preventDefault();
             event.stopImmediatePropagation();

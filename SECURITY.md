@@ -37,6 +37,8 @@ Redirecting uses exact APP_ID/NAME_SPACE/MESSAGE transitions, a startup/recovery
 
 The release contains placeholder hosts only. Capture mode intentionally prints local app metadata and may reveal private URLs from other apps; redact it before sharing. Ignore rules reduce accidental inclusion but do not sanitize Git history or replace review. Existing Git commit attribution is public GitHub metadata; this update does not rewrite historical author records.
 
+Navigation revision 10 extends local DOM navigation to menus, listboxes and checkbox labels, and adjusts scroll margins and toolbar candidate selection. It adds no network calls, credential access, HTML parsing or dependency downloads. Labels and app controls continue to come from the existing Jellyfin document. Disabled and hidden controls remain excluded, and the opt-in path/query guard remains required. Its regression checks use synthetic elements and dummy states only; they provide no browser security or physical-TV guarantee.
+
 ## Reporting an issue
 
 Do not include tokens, passwords, Quick Connect codes, TV pairing values, unredacted logs, private server URLs or account data in public reports. For an ordinary navigation bug, describe the page, key press, expected action, Jellyfin version and TV model. For a potential security issue, avoid posting an exploit or secret publicly; use a private reporting channel offered by the repository owner if available.

@@ -34,6 +34,16 @@ The launcher is an external service. The browser adapters do not store TV pairin
 
 ## Intended controls
 
+Navigation revision 10 fixes Profile/Settings menus and Display dropdown lists. It includes menu/listbox entries even when they have a negative tab index, activates the focused entry with OK, and keeps arrows inside the open overlay. Checkbox navigation measures and outlines the visible label while retaining focus on the real input. Horizontal movement in a top toolbar stays in the same row; Down can leave the toolbar. Focus scrolling reserves space for a visible fixed/sticky header and the yellow outline.
+
+To link directly to Playback preferences with the adapter enabled, use:
+
+```text
+http://JELLYFIN_HOST:8096/web/vizio.html?vizioNav=1#/mypreferencesplayback
+```
+
+The query string belongs before the `#` route. Opening `/web/#/mypreferencesplayback` loads the ordinary entry page without these handlers.
+
 | Action | Intended behavior |
 | --- | --- |
 | Arrow keys while browsing | Move a yellow outline between visible controls |
@@ -55,7 +65,7 @@ For an existing root shell inside the Jellyfin container:
 ```sh
 set -eu
 cd /root
-git clone https://github.com/dirazi/Vizio-TV-SmartCast-Jellyfin.git vizio-jellyfin-conjure
+git clone https://github.com/dirazi/Jellyfin-Vizio-Application-Redirection.git vizio-jellyfin-conjure
 cd /root/vizio-jellyfin-conjure
 # Review the files before executing a privileged installer.
 sh -n ./install-vizio-nav.sh
@@ -68,7 +78,7 @@ sha256sum /usr/share/jellyfin/web/index.html
 If using a normal account on a Debian host, obtain a root-owned checkout with sudo:
 
 ```sh
-sudo git clone https://github.com/dirazi/Vizio-TV-SmartCast-Jellyfin.git /root/vizio-jellyfin-conjure
+sudo git clone https://github.com/dirazi/Jellyfin-Vizio-Application-Redirection.git /root/vizio-jellyfin-conjure
 sudo sh -n /root/vizio-jellyfin-conjure/install-vizio-nav.sh
 sudo sh /root/vizio-jellyfin-conjure/install-vizio-nav.sh
 ```
@@ -95,6 +105,8 @@ Use `sudo sh /root/vizio-jellyfin-conjure/SCRIPT_NAME.sh` if running from a norm
 
 Updates stage files, compare copied JavaScript and retain backups. Replacements across several files are sequential, **not one atomic transaction**. Keep the TV closed while updating and keep both printed backup paths. If an update fails after a replacement, restore the corresponding backed-up files or remove the trial and reinstall. Do not assume a failed update restored itself.
 
+The card-actions updater also installs navigation revision 10 and updates its script reference to `vizio-remote-nav.js?v=10`. Existing trial installations can use that updater for the menu, checkbox, toolbar and scrolling fixes; no separate temporary patch script is needed. Close Conjure completely afterward and reopen the opted-in entry URL, optionally adding `&navTrial=10` before the hash route to refresh the entry page.
+
 ## Simple validation
 
 From a device that can reach your own server, replace the example host, then run:
@@ -116,6 +128,17 @@ fi
 Compare the before/after local `index.html` hashes as well. Then check the normal Jellyfin URL on a laptop, launch the opted-in URL on the TV, and test: login/Quick Connect, Home, Movies, Shows, a multi-season series, episode selection, subtitles while paused and playing, Back from playback, and Back from season/episode pages. Check that one OK press triggers only one action. Reopen Conjure after changes; a new query parameter such as `&trial=2` may help with a cached entry page.
 
 For temporary navigation diagnostics append `&vizioDiag=1`. The publication revision displays only fixed navigation names or `[input]` / `[other]`; it does not display typed characters or numeric key codes. Turn diagnostics off for normal use. Never use real credentials in a diagnostic recording.
+
+For revision 10, also test Profile → Settings; a checkbox between two dropdowns; Display dropdown Up/Down/OK; returning from a lower control to the first control; and moving horizontally along the top bar without entering page content. The focused element should remain fully visible below the header. Use Down to leave the toolbar.
+
+Developers with Node.js installed can run the dependency-free mocked navigation checks:
+
+```sh
+node --check vizio-remote-nav.js
+node tests/navigation.cjs
+```
+
+These checks cover URL opt-in, checkbox label geometry/focus, disabled controls, menu and listbox scope, negative-tab-index entries, OK/repeat behavior, toolbar row boundaries and the computed header scroll margin. They do not render a browser or establish physical-TV behavior. A fresh regression of the complete published revision remains pending.
 
 Jellyfin package upgrades can make the copied `vizio.html` stale. After an upgrade, remove/recreate the trial from the new installed `index.html` and repeat validation; there is no package hook or automatic compatibility guarantee.
 
