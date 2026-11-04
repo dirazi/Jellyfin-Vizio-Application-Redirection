@@ -34,7 +34,9 @@ The launcher is an external service. The browser adapters do not store TV pairin
 
 ## Intended controls
 
-Navigation revision 10 fixes Profile/Settings menus and Display dropdown lists. It includes menu/listbox entries even when they have a negative tab index, activates the focused entry with OK, and keeps arrows inside the open overlay. Checkbox navigation measures and outlines the visible label while retaining focus on the real input. Horizontal movement in a top toolbar stays in the same row; Down can leave the toolbar. Focus scrolling reserves space for a visible fixed/sticky header and the yellow outline.
+Navigation revision 11 retains the fixes for Profile/Settings menus and Display dropdown lists. It includes menu/listbox entries even when they have a negative tab index, activates the focused entry with OK, and keeps arrows inside the open overlay. Checkbox navigation measures and outlines the visible label while retaining focus on the real input. Horizontal movement in a top toolbar stays in the same row; Down can leave the toolbar. Focus scrolling reserves space for a visible fixed/sticky header and the yellow outline.
+
+Revision 11 keeps focus in movie, series, season and episode cards while a preceding or following card row exists, including offscreen rows. Up/Down reveal the adjacent row; Up from the first row returns to the header. Left at the left edge and Down at the bottom stay in cards. Right at the end of a row can enter the alphabet rail. On that rail, Up/Down stay on letters, Left returns to cards, and Up from A (or the optional # entry) returns to the header. Horizontal header navigation crosses sibling toolbar groups on the same visual row, including toward SyncPlay; Down leaves the row.
 
 To link directly to Playback preferences with the adapter enabled, use:
 
@@ -105,7 +107,7 @@ Use `sudo sh /root/vizio-jellyfin-conjure/SCRIPT_NAME.sh` if running from a norm
 
 Updates stage files, compare copied JavaScript and retain backups. Replacements across several files are sequential, **not one atomic transaction**. Keep the TV closed while updating and keep both printed backup paths. If an update fails after a replacement, restore the corresponding backed-up files or remove the trial and reinstall. Do not assume a failed update restored itself.
 
-The card-actions updater also installs navigation revision 10 and updates its script reference to `vizio-remote-nav.js?v=10`. Existing trial installations can use that updater for the menu, checkbox, toolbar and scrolling fixes; no separate temporary patch script is needed. Close Conjure completely afterward and reopen the opted-in entry URL, optionally adding `&navTrial=10` before the hash route to refresh the entry page.
+The card-actions updater also installs navigation revision 11 and updates its script reference to `vizio-remote-nav.js?v=11`. Existing trial installations can use that updater for the menu, checkbox, toolbar and scrolling fixes; no separate temporary patch script is needed. Close Conjure completely afterward and reopen the opted-in entry URL, optionally adding `&navTrial=11` before the hash route to refresh the entry page.
 
 ## Simple validation
 
@@ -129,7 +131,7 @@ Compare the before/after local `index.html` hashes as well. Then check the norma
 
 For temporary navigation diagnostics append `&vizioDiag=1`. The publication revision displays only fixed navigation names or `[input]` / `[other]`; it does not display typed characters or numeric key codes. Turn diagnostics off for normal use. Never use real credentials in a diagnostic recording.
 
-For revision 10, also test Profile → Settings; a checkbox between two dropdowns; Display dropdown Up/Down/OK; returning from a lower control to the first control; and moving horizontally along the top bar without entering page content. The focused element should remain fully visible below the header. Use Down to leave the toolbar.
+For revision 11, first go several screens down in Movies and repeatedly press Up: each preceding card row should scroll into view before the header can be reached at the first row. Repeat for series, seasons and episodes. Check alphabet Up/Down, Left to cards, Up from A to the header, and Right along the header from Discover Movies/Shows toward SyncPlay. Also test Profile → Settings; a checkbox between two dropdowns; Display dropdown Up/Down/OK; returning from a lower control to the first control; and moving horizontally along the top bar without entering page content. The focused element should remain fully visible below the header. Use Down to leave the toolbar.
 
 Developers with Node.js installed can run the dependency-free mocked navigation checks:
 
@@ -138,7 +140,7 @@ node --check vizio-remote-nav.js
 node tests/navigation.cjs
 ```
 
-These checks cover URL opt-in, checkbox label geometry/focus, disabled controls, menu and listbox scope, negative-tab-index entries, OK/repeat behavior, toolbar row boundaries and the computed header scroll margin. They do not render a browser or establish physical-TV behavior. A fresh regression of the complete published revision remains pending.
+These checks cover URL opt-in, checkbox label geometry/focus, disabled controls, menu and listbox scope, negative-tab-index entries, OK/repeat behavior, toolbar row boundaries the computed header scroll margin, offscreen card rows with simulated scrolling, sparse rows, page boundaries, alphabet exits and sibling toolbar groups. They do not render a browser or establish physical-TV behavior. A fresh regression of the complete published revision remains pending.
 
 Jellyfin package upgrades can make the copied `vizio.html` stale. After an upgrade, remove/recreate the trial from the new installed `index.html` and repeat validation; there is no package hook or automatic compatibility guarantee.
 

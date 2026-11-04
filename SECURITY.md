@@ -39,6 +39,14 @@ The release contains placeholder hosts only. Capture mode intentionally prints l
 
 Navigation revision 10 extends local DOM navigation to menus, listboxes and checkbox labels, and adjusts scroll margins and toolbar candidate selection. It adds no network calls, credential access, HTML parsing or dependency downloads. Labels and app controls continue to come from the existing Jellyfin document. Disabled and hidden controls remain excluded, and the opt-in path/query guard remains required. Its regression checks use synthetic elements and dummy states only; they provide no browser security or physical-TV guarantee.
 
+## Small follow-up review: navigation revision 11
+
+On 2026-11-03, a focused static review examined the revision-11 navigation diff, its regression fixtures and the installer cache-reference changes. No new authentication bypass, credential disclosure, script-injection path, external request or privileged-write path was identified in that diff. This is a limited source review, not a guarantee that the project is free of vulnerabilities.
+
+The change reads existing DOM geometry and alphabet labels to choose focus targets; it adds no network calls, storage, dynamic code evaluation, dependencies or HTML parsing. It preserves the opt-in path/query guard, disabled/hidden-control filtering and open-menu/listbox scope. Enter/OK activation is unchanged. The shell changes only refresh the navigation script version; existing ownership checks, backups and normal-index preservation remain in place.
+
+Earlier development checks passed with synthetic DOM fixtures, including offscreen rows, Settings dropdowns and alphabet/header boundaries. They were not rerun during this source-only review: the review environment lacks the complete execution sandbox required by the security-review procedure. The owner confirmed installation of revision 11; physical-TV regression results are still pending. Server authentication, proxy/firewall rules and TV firmware are outside this small review.
+
 ## Reporting an issue
 
 Do not include tokens, passwords, Quick Connect codes, TV pairing values, unredacted logs, private server URLs or account data in public reports. For an ordinary navigation bug, describe the page, key press, expected action, Jellyfin version and TV model. For a potential security issue, avoid posting an exploit or secret publicly; use a private reporting channel offered by the repository owner if available.

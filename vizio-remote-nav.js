@@ -1,4 +1,4 @@
-/* Jellyfin Web 12.1 Vizio/Conjure remote navigation, revision 10.
+/* Jellyfin Web 12.1 Vizio/Conjure remote navigation, revision 11.
  * Opt in by opening /web/vizio.html?vizioNav=1 on the TV.
  * Other URLs leave Jellyfin's key handling untouched.
  */
@@ -9,6 +9,7 @@
         !/(?:^|[?&])vizioNav=1(?:&|$)/.test(window.location.search)) return;
     if (window.__vizioRemoteNavInstalled) return;
     window.__vizioRemoteNavInstalled = true;
+    window.__vizioRemoteNavVersion = 11;
 
     var keys = { ArrowUp: 1, ArrowDown: 1, ArrowLeft: 1, ArrowRight: 1 };
     var selector = 'a[href],button,input,select,textarea,[role="button"],[role="menuitem"],[role="option"],[role="combobox"],[tabindex="0"]';
@@ -43,6 +44,10 @@
     }
 
     var topBarSelector = '.MuiToolbar-root,.headerTop,.skinHeader,.MuiAppBar-root,[role="tablist"],.emby-tabs,header,[role="banner"]';
+    // Match the library rail, not the alphaPicker used as a search keyboard.
+    var alphabetSelector = '.alphaPicker-fixed-right,.alphaPicker-vertical';
+    var cardSelector = '.card[data-id],.listItem[data-id]';
+    var pageSelector = '.mainAnimatedPage,.page,[data-role="page"],main,[role="main"]';
 
     function reveal(el) {
         var node = visual(el), safeTop = 16;
@@ -74,16 +79,16 @@
         return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
     }
 
-    function next(current, list, key) {
-        var bar = current.closest(topBarSelector);
-        if (bar && (key === 'ArrowLeft' || key === 'ArrowRight')) {
-            var row = visual(current).getBoundingClientRect();
-            list = list.filter(function (el) {
-                var r = visual(el).getBoundingClientRect();
-                var overlap = Math.min(row.bottom, r.bottom) - Math.max(row.top, r.top);
-                return bar.contains(el) && overlap >= Math.min(row.height, r.height) / 2;
-            });
-        }
+    function sameRow(a, b) {
+        var overlap = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        return overlap >= Math.min(a.height, b.height) / 2;
+    }
+
+    function card(el) { return el.closest(cardSelector); }
+    function alphabet(el) { return el.closest(alphabetSelector); }
+    function inBar(el) { return !!el.closest(topBarSelector); }
+
+    function nearest(current, list, key) {
         var a = center(current), best = null, bestScore = Infinity;
         list.forEach(function (el) {
             if (el === current) return;
@@ -95,6 +100,72 @@
             if (score < bestScore) { bestScore = score; best = el; }
         });
         return best;
+    }
+
+    function cardStep(current, list, key) {
+        var currentCard = card(current), row = currentCard.getBoundingClientRect();
+        var vertical = key === 'ArrowUp' || key === 'ArrowDown';
+        var a = center(currentCard), closestRow = null, distance = Infinity;
+        var candidates = list.filter(function (el) {
+            var item = card(el);
+            if (!item || item === currentCard) return false;
+            var r = item.getBoundingClientRect(), b = center(item);
+            var primary = key === 'ArrowDown' ? b.y - a.y : key === 'ArrowUp' ? a.y - b.y :
+                key === 'ArrowRight' ? b.x - a.x : a.x - b.x;
+            if (primary <= 2 || sameRow(row, r) === vertical) return false;
+            if (primary < distance) { distance = primary; closestRow = r; }
+            return true;
+        });
+        if (!vertical) return nearest(current, candidates, key);
+        // Reach the adjacent row even when its cards are far across the page.
+        var best = null, offset = Infinity;
+        candidates.forEach(function (el) {
+            if (!sameRow(closestRow, card(el).getBoundingClientRect())) return;
+            var dx = Math.abs(center(card(el)).x - a.x);
+            if (dx < offset) { offset = dx; best = el; }
+        });
+        return best;
+    }
+
+    function next(current, list, key) {
+        // Open settings/dropdowns retain their existing isolated navigation.
+        if (scope() !== document) return nearest(current, list, key);
+        var rail = alphabet(current), item = card(current), target;
+        var headers = list.filter(inBar);
+        if (rail) {
+            var letters = list.filter(function (el) { return alphabet(el) === rail; });
+            if (key === 'ArrowRight') return null;
+            if (key === 'ArrowLeft') {
+                return nearest(current, list.filter(function (el) { return !!card(el); }), key);
+            }
+            // A is the top exit. The optional # entry also exits upward.
+            var value = (current.getAttribute('data-value') || current.getAttribute('value') || current.textContent || '').trim().toUpperCase();
+            if (key === 'ArrowUp' && (value === 'A' || value === '#')) {
+                return nearest(current, headers, key);
+            }
+            target = nearest(current, letters, key);
+            return target || (key === 'ArrowUp' ? nearest(current, headers, key) : null);
+        }
+        if (inBar(current) && (key === 'ArrowLeft' || key === 'ArrowRight')) {
+            var row = visual(current).getBoundingClientRect();
+            // Header tabs and SyncPlay can live in separate toolbar children.
+            return nearest(current, headers.filter(function (el) {
+                return sameRow(row, visual(el).getBoundingClientRect());
+            }), key);
+        }
+        if (item) {
+            var page = current.closest(pageSelector) || document;
+            var cards = list.filter(function (el) { return card(el) && (el.closest(pageSelector) || document) === page; });
+            target = cardStep(current, cards, key);
+            if (target) return target;
+            if (key === 'ArrowUp') return nearest(current, headers, key);
+            if (key === 'ArrowRight') {
+                return nearest(current, list.filter(function (el) { return !!alphabet(el); }), key);
+            }
+            // Bottom and left edges stay in the cards; never wrap to the header.
+            return null;
+        }
+        return nearest(current, list, key);
     }
 
     function isPlaying() {

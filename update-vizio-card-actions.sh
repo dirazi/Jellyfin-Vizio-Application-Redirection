@@ -68,13 +68,13 @@ for file in vizio-remote-nav.js vizio-back-nav.js vizio-movie-play.js; do
     cmp -s "./$file" "$staging/$file"
 done
 cp -p "$web/vizio.html" "$staging/page.html"
-sed -i -e 's/src="vizio-remote-nav\.js[^"]*"/src="vizio-remote-nav.js?v=10"/' -e 's/src="vizio-back-nav\.js[^"]*"/src="vizio-back-nav.js?v=4"/' "$staging/page.html"
+sed -i -e 's/src="vizio-remote-nav\.js[^"]*"/src="vizio-remote-nav.js?v=11"/' -e 's/src="vizio-back-nav\.js[^"]*"/src="vizio-back-nav.js?v=4"/' "$staging/page.html"
 if grep -Fq 'vizio-movie-play.js' "$staging/page.html"; then
     sed -i 's/src="vizio-movie-play\.js[^"]*"/src="vizio-movie-play.js?v=3"/' "$staging/page.html"
 else
     sed -i '/<\/body>/i\<script src="vizio-movie-play.js?v=3"></script>' "$staging/page.html"
 fi
-grep -Fq 'src="vizio-remote-nav.js?v=10"' "$staging/page.html"
+grep -Fq 'src="vizio-remote-nav.js?v=11"' "$staging/page.html"
 grep -Fq 'src="vizio-back-nav.js?v=4"' "$staging/page.html"
 grep -Fq 'src="vizio-movie-play.js?v=3"' "$staging/page.html"
 for file in vizio-remote-nav.js vizio-back-nav.js vizio-movie-play.js; do mv "$staging/$file" "$web/$file"; done
